@@ -113,9 +113,17 @@ configuration file <http://docs.pycsw.org/en/latest/configuration.html>`_.
     reasonable number of parallel running processes is not higher than the 
     number of processor cores.
 
+:logserver:
+    `sqlite3` or `postgres` are currently supported. SQLite3 is the default one,
+    used for testing purposes. Use PostgreSQL for production deployment.
+
 :logdatabase:
-    SQLite3 file, where the login about requests/responses is to be stored. It
-    can be set to `":memory:"` to store the database in memory.
+    :SQLite3:
+        Name of the file file, where the login about requests/responses is to be stored. It
+        can be set to `":memory:"` to store the database in memory.
+    :PostgreSQL:
+        Use the connection string (dbname, user, host, ... parameters), as
+        described e.g. in `Psycopg2 documentation <https://wiki.postgresql.org/wiki/Psycopg2_Tutorial>`_.
 
 :maxrequestsize:
     maximal request size. 0 for no limit 

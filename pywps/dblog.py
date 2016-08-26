@@ -5,7 +5,6 @@ Implementation of logging for PyWPS-4
 import logging
 from pywps import configuration
 from pywps.exceptions import NoApplicableCode
-import sqlite3
 import datetime
 import pickle
 import json
@@ -13,7 +12,6 @@ import os
 
 LOGGER = logging.getLogger('PYWPS')
 _CONNECTION = None
-_DATABASE = None
 
 def log_request(uuid, request):
     """Write OGC WPS request (only the necessary parts) to database logging
@@ -134,26 +132,19 @@ def get_connection():
 
     LOGGER.debug('Initializing database connection')
     global _CONNECTION
-    global _DATABASE
 
     if _CONNECTION:
         return _CONNECTION
 
-    if not _DATABASE:
-        database = configuration.get_config_value('server', 'logdatabase')
+    server = configuration.get_config_value('server', 'logserver')
+    database = configuration.get_config_value('server', 'logdatabase')
 
-        if not database:
-            database = ':memory:'
-        elif database == ':memory:':
-            pass
-        else:
-            database = os.path.abspath(database)
-
-        _DATABASE = database
+    connection = None
+    if server == 'postgres':
+        connection = _get_postgres_conection()
     else:
-        database = _DATABASE
+        connection = _get_sqlite3_conection()
 
-    connection = sqlite3.connect(database, check_same_thread=False)
     if check_db_table(connection):
         if check_db_columns(connection):
             _CONNECTION = connection
@@ -164,7 +155,10 @@ def get_connection():
             """ % database)
 
     else:
-        _CONNECTION = sqlite3.connect(database, check_same_thread=False)
+        if server == 'postgres':
+            _CONNECTION = _get_postgres_conection()
+        else:
+            _CONNECTION = _get_sqlite3_conection()
         cursor = _CONNECTION.cursor()
         createsql = """
             CREATE TABLE pywps_requests(
@@ -192,6 +186,34 @@ def get_connection():
         _CONNECTION.commit()
 
     return _CONNECTION
+
+def _get_postgres_conection():
+    """Return postres database connection
+    """
+
+    import psycopg2
+    connection_string = configuration.get_config_value('server', 'logdatabase')
+    connection = psycopg2.connect(connection_string)
+    return connection
+
+def _get_sqlite3_conection():
+    """Return sqlite3 database connection
+    """
+
+    import sqlite3
+    database = configuration.get_config_value('server', 'logdatabase')
+
+    if not database:
+        database = ':memory:'
+    elif database == ':memory:':
+        pass
+    else:
+        database = os.path.abspath(database)
+
+    connection = sqlite3.connect(database, check_same_thread=False)
+
+    return connection
+
 
 def check_db_table(connection):
     """Check for existing pywps_requests table in the datase
