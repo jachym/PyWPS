@@ -17,6 +17,7 @@ from pywps.validator import get_validator
 from pywps.validator.literalvalidator import (validate_anyvalue,
                                               validate_allowed_values)
 from pywps.exceptions import InvalidParameterValue
+from pywps._compat import PY2
 import base64
 from collections import namedtuple
 
@@ -143,7 +144,12 @@ class IOHandler(object):
                 return self._tempfile
             else:
                 (opening, stream_file_name) = tempfile.mkstemp(dir=self.workdir)
-                stream_file = open(stream_file_name, 'w')
+                openmode = 'w'
+                if not PY2 and isinstance(self.source, bytes):
+                    # on Python 3 open the file in binary mode if the source is
+                    # bytes, which happens when the data was base64-decoded
+                    openmode += 'b'
+                stream_file = open(stream_file_name, openmode)
 
                 if self.source_type == SOURCE_TYPE.STREAM:
                     stream_file.write(self.source.read())
