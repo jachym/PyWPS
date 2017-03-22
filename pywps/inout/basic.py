@@ -186,7 +186,11 @@ class IOHandler(object):
     def get_data(self):
         """Get source as simple data object"""
         if self.source_type == SOURCE_TYPE.FILE:
-            file_handler = open(self.source, mode='r')
+            openmode = 'r'
+            if not PY2 and hasattr(self, 'data_format') and \
+                    self.data_format.encoding == 'base64':
+                openmode += 'b'
+            file_handler = open(self.source, mode=openmode)
             content = file_handler.read()
             file_handler.close()
             return content
