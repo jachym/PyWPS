@@ -9,7 +9,7 @@
 import os
 import tempfile
 import unittest
-from pywps import Format
+from pywps import Format, FORMATS
 from pywps.validator import get_validator
 from pywps import NAMESPACES
 from pywps.inout.basic import IOHandler, SOURCE_TYPE, SimpleHandler, BBoxInput, BBoxOutput, \
@@ -25,8 +25,13 @@ from lxml import etree
 
 
 def get_data_format(mime_type):
-    return Format(mime_type=mime_type,
-    validate=get_validator(mime_type))
+    try:
+        definition = next(x for x in FORMATS if x.mime_type == mime_type)
+        return Format(mime_type=mime_type,
+        validate=get_validator(mime_type), extension=definition.extension)
+    except:
+        return Format(mime_type=mime_type,
+        validate=get_validator(mime_type))
 
 class IOHandlerTest(unittest.TestCase):
     """IOHandler test cases"""
@@ -168,6 +173,7 @@ class ComplexInputTest(unittest.TestCase):
         self.assertEqual(out['type'], 'complex', 'it is complex input')
         self.assertTrue(out['data_format'], 'data_format set')
         self.assertEqual(out['data_format']['mime_type'], 'application/json', 'data_format set')
+        self.assertTrue(self.complex_in.file.endswith(".json"))
 
 class ComplexOutputTest(unittest.TestCase):
     """ComplexOutput test cases"""

@@ -77,12 +77,15 @@ class IOHandler(object):
     >>> # skipped assert isinstance(ioh_mo.memory_object, POSH)
     """
 
-    def __init__(self, workdir=None, mode=MODE.NONE):
+    def __init__(self, workdir=None, mode=MODE.NONE, file_prefix=None,
+            file_suffix=None):
         self.source_type = None
         self.source = None
         self._tempfile = None
         self.workdir = workdir
         self._stream = None
+        self.file_suffix = file_suffix
+        self.file_prefix = file_prefix
 
         self.valid_mode = mode
 
@@ -142,11 +145,9 @@ class IOHandler(object):
             if self._tempfile:
                 return self._tempfile
             else:
-                suffix = ''
-                if hasattr(self, 'data_format'):
-                    suffix = self.data_format.extension
                 (opening, stream_file_name) = tempfile.mkstemp(
-                    dir=self.workdir, suffix=suffix)
+                    dir=self.workdir, suffix=self.file_suffix,
+                    prefix=self.file_prefix)
                 stream_file = open(stream_file_name, 'w')
 
                 if self.source_type == SOURCE_TYPE.STREAM:
@@ -360,6 +361,7 @@ class BasicComplex(object):
             self._data_format = data_format
             if not data_format.validate or data_format.validate == emptyvalidator:
                 data_format.validate = get_validator(data_format.mime_type)
+            self.file_suffix = data_format.extension
         else:
             raise InvalidParameterValue("Requested format "
                                         "%s, %s, %s not supported" %
@@ -535,7 +537,7 @@ class ComplexInput(BasicIO, BasicComplex, IOHandler):
 
     def __init__(self, identifier, title=None, abstract=None,
                  workdir=None, data_format=None, supported_formats=None,
-                 mode=MODE.NONE):
+                 mode=MODE.NONE, file_suffix=None):
         BasicIO.__init__(self, identifier, title, abstract)
         IOHandler.__init__(self, workdir=workdir, mode=mode)
         BasicComplex.__init__(self, data_format, supported_formats)
