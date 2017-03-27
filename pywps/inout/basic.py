@@ -183,13 +183,15 @@ class IOHandler(object):
         elif self.source_type == SOURCE_TYPE.DATA:
             return StringIO(text_type(self.source))
 
+    def get_open_mode(self):
+        """Get file open mode. This method can be overloaded by child classes
+        """
+        return 'r'
+
     def get_data(self):
         """Get source as simple data object"""
         if self.source_type == SOURCE_TYPE.FILE:
-            openmode = 'r'
-            if not PY2 and hasattr(self, 'data_format') and \
-                    self.data_format.encoding == 'base64':
-                openmode += 'b'
+            openmode = self.get_open_mode()
             file_handler = open(self.source, mode=openmode)
             content = file_handler.read()
             file_handler.close()
@@ -328,6 +330,13 @@ class BasicComplex(object):
                 return frmt
         else:
             return None
+
+    def get_open_mode(self):
+        """Get file `open` mode. This method rewrites original method in
+        :class:`IOHandler`
+        """
+        if not PY2 and self.data_format.encoding == 'base64':
+            return 'rb'
 
     @property
     def validator(self):
