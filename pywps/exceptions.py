@@ -160,3 +160,10 @@ class SchedulerNotAvailable(NoApplicableCode):
     """Job scheduler not available exception implementation
     """
     code = 400
+
+
+class NoAvailablePortException(NoApplicableCode):
+    """
+    No port available for new docker.
+    """
+    code = 400
